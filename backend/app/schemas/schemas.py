@@ -100,7 +100,7 @@ class AssetBase(BaseModel):
 
 
 class AssetCreate(AssetBase):
-    pass
+    family_id: int | None = None
 
 
 class AssetUpdate(BaseModel):
@@ -136,7 +136,7 @@ class LiabilityBase(BaseModel):
 
 
 class LiabilityCreate(LiabilityBase):
-    pass
+    family_id: int | None = None
 
 
 class LiabilityUpdate(BaseModel):
@@ -172,7 +172,7 @@ class InsuranceBase(BaseModel):
 
 
 class InsuranceCreate(InsuranceBase):
-    pass
+    family_id: int | None = None
 
 
 class InsuranceUpdate(BaseModel):
@@ -204,7 +204,7 @@ class HealthProfileBase(BaseModel):
 
 
 class HealthProfileCreate(HealthProfileBase):
-    pass
+    member_id: int | None = None
 
 
 class HealthProfileUpdate(BaseModel):
@@ -233,7 +233,7 @@ class MedicalRecordBase(BaseModel):
 
 
 class MedicalRecordCreate(MedicalRecordBase):
-    pass
+    member_id: int | None = None
 
 
 class MedicalRecordUpdate(BaseModel):
@@ -263,7 +263,7 @@ class HealthcareExpenseBase(BaseModel):
 
 
 class HealthcareExpenseCreate(HealthcareExpenseBase):
-    pass
+    family_id: int | None = None
 
 
 class HealthcareExpenseUpdate(BaseModel):
@@ -289,6 +289,7 @@ class DocumentBase(BaseModel):
 
 
 class DocumentCreate(DocumentBase):
+    family_id: int | None = None
     file_path: str = ""
     file_type: str = ""
     size: int = 0
@@ -323,7 +324,7 @@ class NotificationBase(BaseModel):
 
 
 class NotificationCreate(NotificationBase):
-    pass
+    family_id: int | None = None
 
 
 class NotificationUpdate(BaseModel):

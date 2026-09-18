@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.family import resolve_family_id, resolve_member_id
 from app.core.security import get_current_user
 from app.models.models import HealthcareExpense, HealthProfile, MedicalRecord, User
 from app.schemas import schemas
@@ -28,12 +29,14 @@ def create_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    family_id = resolve_family_id(db, current_user)
+    member_id = resolve_member_id(db, current_user, family_id, payload.member_id)
     existing = (
-        db.query(HealthProfile).filter(HealthProfile.member_id == payload.member_id).first()
+        db.query(HealthProfile).filter(HealthProfile.member_id == member_id).first()
     )
     if existing:
         raise HTTPException(status_code=400, detail="Profile already exists for member")
-    profile = HealthProfile(**payload.model_dump())
+    profile = HealthProfile(**{**payload.model_dump(), "member_id": member_id})
     db.add(profile)
     db.commit()
     db.refresh(profile)
@@ -102,7 +105,9 @@ def create_record(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    record = MedicalRecord(**payload.model_dump())
+    family_id = resolve_family_id(db, current_user)
+    member_id = resolve_member_id(db, current_user, family_id, payload.member_id)
+    record = MedicalRecord(**{**payload.model_dump(), "member_id": member_id})
     db.add(record)
     db.commit()
     db.refresh(record)
@@ -174,7 +179,9 @@ def create_expense(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    expense = HealthcareExpense(**payload.model_dump())
+    data = payload.model_dump()
+    data["family_id"] = resolve_family_id(db, current_user, payload.family_id)
+    expense = HealthcareExpense(**data)
     db.add(expense)
     db.commit()
     db.refresh(expense)

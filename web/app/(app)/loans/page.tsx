@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiErrorMessage } from "@/lib/api";
 import { formatINR, getToken } from "@/lib/format";
 import DataTable from "@/components/DataTable";
 
 type Loan = {
   id?: number;
-  lender_name: string;
+  lender: string;
   loan_type: string;
-  principal_amount: number;
-  outstanding_balance: number;
+  principal: number;
+  outstanding: number;
   interest_rate?: number;
-  emi_amount?: number;
+  emi?: number;
 };
 
 export default function LoansPage() {
@@ -23,12 +23,12 @@ export default function LoansPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Loan>({
-    lender_name: "",
+    lender: "",
     loan_type: "home",
-    principal_amount: 0,
-    outstanding_balance: 0,
+    principal: 0,
+    outstanding: 0,
     interest_rate: 8.5,
-    emi_amount: 0,
+    emi: 0,
   });
 
   async function load() {
@@ -56,10 +56,10 @@ export default function LoansPage() {
     setSaving(true);
     try {
       await apiPost("/api/loans/", form);
-      setForm({ lender_name: "", loan_type: "home", principal_amount: 0, outstanding_balance: 0, interest_rate: 8.5, emi_amount: 0 });
+      setForm({ lender: "", loan_type: "home", principal: 0, outstanding: 0, interest_rate: 8.5, emi: 0 });
       await load();
-    } catch {
-      setError("Failed to create loan.");
+    } catch (e) {
+      setError(apiErrorMessage(e, "Failed to create loan."));
     } finally {
       setSaving(false);
     }
@@ -76,8 +76,8 @@ export default function LoansPage() {
         <form onSubmit={onCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="label">Lender</label>
-            <input className="input" value={form.lender_name}
-              onChange={(e) => setForm({ ...form, lender_name: e.target.value })} required />
+            <input className="input" value={form.lender}
+              onChange={(e) => setForm({ ...form, lender: e.target.value })} required />
           </div>
           <div>
             <label className="label">Loan Type</label>
@@ -90,13 +90,13 @@ export default function LoansPage() {
           </div>
           <div>
             <label className="label">Principal (₹)</label>
-            <input className="input" type="number" value={form.principal_amount}
-              onChange={(e) => setForm({ ...form, principal_amount: Number(e.target.value) })} required />
+            <input className="input" type="number" value={form.principal}
+              onChange={(e) => setForm({ ...form, principal: Number(e.target.value) })} required />
           </div>
           <div>
             <label className="label">Outstanding (₹)</label>
-            <input className="input" type="number" value={form.outstanding_balance}
-              onChange={(e) => setForm({ ...form, outstanding_balance: Number(e.target.value) })} required />
+            <input className="input" type="number" value={form.outstanding}
+              onChange={(e) => setForm({ ...form, outstanding: Number(e.target.value) })} required />
           </div>
           <div>
             <label className="label">Interest %</label>
@@ -105,8 +105,8 @@ export default function LoansPage() {
           </div>
           <div>
             <label className="label">EMI (₹)</label>
-            <input className="input" type="number" value={form.emi_amount ?? 0}
-              onChange={(e) => setForm({ ...form, emi_amount: Number(e.target.value) })} />
+            <input className="input" type="number" value={form.emi ?? 0}
+              onChange={(e) => setForm({ ...form, emi: Number(e.target.value) })} />
           </div>
           <div className="sm:col-span-3">
             <button className="btn-primary" disabled={saving}>
@@ -119,12 +119,12 @@ export default function LoansPage() {
         <h2 className="font-semibold mb-2">Your Loans</h2>
         <DataTable<Loan>
           columns={[
-            { key: "lender_name", header: "Lender" },
+            { key: "lender", header: "Lender" },
             { key: "loan_type", header: "Type" },
-            { key: "principal_amount", header: "Principal", render: (r) => formatINR(r.principal_amount) },
-            { key: "outstanding_balance", header: "Outstanding", render: (r) => formatINR(r.outstanding_balance) },
+            { key: "principal", header: "Principal", render: (r) => formatINR(r.principal) },
+            { key: "outstanding", header: "Outstanding", render: (r) => formatINR(r.outstanding) },
             { key: "interest_rate", header: "Rate %", render: (r) => String(r.interest_rate ?? "—") },
-            { key: "emi_amount", header: "EMI", render: (r) => formatINR(r.emi_amount) },
+            { key: "emi", header: "EMI", render: (r) => formatINR(r.emi) },
           ]}
           rows={rows}
         />

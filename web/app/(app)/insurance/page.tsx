@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiErrorMessage } from "@/lib/api";
 import { formatINR, getToken } from "@/lib/format";
 import DataTable from "@/components/DataTable";
 
 type Policy = {
   id?: number;
-  policy_name: string;
+  policy_number: string;
   policy_type: string;
   provider: string;
   sum_insured: number;
-  premium_amount: number;
+  premium: number;
   expiry_date?: string;
 };
 
@@ -23,11 +23,11 @@ export default function InsurancePage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Policy>({
-    policy_name: "",
+    policy_number: "",
     policy_type: "health",
     provider: "",
     sum_insured: 0,
-    premium_amount: 0,
+    premium: 0,
     expiry_date: "",
   });
 
@@ -56,10 +56,10 @@ export default function InsurancePage() {
     setSaving(true);
     try {
       await apiPost("/api/insurance/", form);
-      setForm({ policy_name: "", policy_type: "health", provider: "", sum_insured: 0, premium_amount: 0, expiry_date: "" });
+      setForm({ policy_number: "", policy_type: "health", provider: "", sum_insured: 0, premium: 0, expiry_date: "" });
       await load();
-    } catch {
-      setError("Failed to create policy.");
+    } catch (e) {
+      setError(apiErrorMessage(e, "Failed to create policy."));
     } finally {
       setSaving(false);
     }
@@ -75,9 +75,9 @@ export default function InsurancePage() {
         <h2 className="font-semibold mb-3">Add Policy</h2>
         <form onSubmit={onCreate} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className="label">Policy Name</label>
-            <input className="input" value={form.policy_name}
-              onChange={(e) => setForm({ ...form, policy_name: e.target.value })} required />
+            <label className="label">Policy No. / Name</label>
+            <input className="input" value={form.policy_number}
+              onChange={(e) => setForm({ ...form, policy_number: e.target.value })} required />
           </div>
           <div>
             <label className="label">Type</label>
@@ -100,8 +100,8 @@ export default function InsurancePage() {
           </div>
           <div>
             <label className="label">Premium (₹)</label>
-            <input className="input" type="number" value={form.premium_amount}
-              onChange={(e) => setForm({ ...form, premium_amount: Number(e.target.value) })} required />
+            <input className="input" type="number" value={form.premium}
+              onChange={(e) => setForm({ ...form, premium: Number(e.target.value) })} required />
           </div>
           <div>
             <label className="label">Expiry Date</label>
@@ -119,11 +119,11 @@ export default function InsurancePage() {
         <h2 className="font-semibold mb-2">Your Policies</h2>
         <DataTable<Policy>
           columns={[
-            { key: "policy_name", header: "Policy" },
+            { key: "policy_number", header: "Policy" },
             { key: "policy_type", header: "Type" },
             { key: "provider", header: "Provider" },
             { key: "sum_insured", header: "Sum Insured", render: (r) => formatINR(r.sum_insured) },
-            { key: "premium_amount", header: "Premium", render: (r) => formatINR(r.premium_amount) },
+            { key: "premium", header: "Premium", render: (r) => formatINR(r.premium) },
             { key: "expiry_date", header: "Expiry", render: (r) => r.expiry_date ?? "—" },
           ]}
           rows={rows}

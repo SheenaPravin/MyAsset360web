@@ -9,7 +9,7 @@ from app.core.security import (
     get_password_hash,
     verify_password,
 )
-from app.models.models import User
+from app.models.models import Family, FamilyMember, User
 from app.schemas import schemas
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -27,6 +27,23 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
         is_active=True,
     )
     db.add(user)
+    db.commit()
+    db.refresh(user)
+    # Every account gets its own family so creates work immediately.
+    base_name = (payload.full_name or payload.email.split("@")[0]).strip() or "My"
+    family = Family(name=f"{base_name}'s Family", owner_id=user.id)
+    db.add(family)
+    db.commit()
+    db.refresh(family)
+    db.add(
+        FamilyMember(
+            family_id=family.id,
+            name=payload.full_name or payload.email,
+            relationship="self",
+            role="admin",
+            email=payload.email,
+        )
+    )
     db.commit()
     db.refresh(user)
     return user

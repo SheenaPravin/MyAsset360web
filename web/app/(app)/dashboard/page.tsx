@@ -22,15 +22,20 @@ type DashboardData = {
   net_worth?: number;
   total_assets?: number;
   total_liabilities?: number;
+  healthcare_spend?: number;
   health_spend?: number;
   health_spend_total?: number;
+  total_sum_insured?: number;
   insurance_coverage?: number;
   total_coverage?: number;
+  expense_by_category?: Record<string, number>;
   assets_by_type?: { name?: string; type?: string; value: number }[];
   monthly_trend?: { month?: string; label?: string; value: number }[];
   upcoming_renewals?: { title?: string; name?: string; date?: string; due_date?: string }[];
   notifications?: { message?: string; title?: string }[];
 };
+
+type AssetRow = { asset_type?: string; current_value?: number };
 
 const COLORS = ["#2563eb", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
@@ -45,8 +50,22 @@ export default function DashboardPage() {
       router.push("/login");
       return;
     }
-    apiGet<DashboardData>("/api/analytics/dashboard")
-      .then(setData)
+    Promise.all([
+      apiGet<DashboardData>("/api/analytics/dashboard"),
+      apiGet<AssetRow[]>("/api/assets/").catch(() => [] as AssetRow[]),
+    ])
+      .then(([d, assets]) => {
+        // Build pie data from the asset list (backend has no asset-breakdown endpoint).
+        const byType = new Map<string, number>();
+        for (const a of assets) {
+          const k = a.asset_type || "other";
+          byType.set(k, (byType.get(k) ?? 0) + (a.current_value ?? 0));
+        }
+        const pie: { type: string; value: number }[] = [];
+        byType.forEach((value, type) => pie.push({ type, value }));
+        d.assets_by_type = pie;
+        setData(d);
+      })
       .catch(() => setError("Failed to load dashboard."))
       .finally(() => setLoading(false));
   }, [router]);
@@ -59,9 +78,9 @@ export default function DashboardPage() {
     name: a.name ?? a.type ?? "Other",
     value: a.value,
   }));
-  const barData = (data.monthly_trend ?? []).map((m) => ({
-    name: m.month ?? m.label ?? "",
-    value: m.value,
+  const barData = Object.entries(data.expense_by_category ?? {}).map(([name, value]) => ({
+    name,
+    value,
   }));
 
   return (
@@ -73,11 +92,11 @@ export default function DashboardPage() {
         <KpiCard title="Total Liabilities" value={formatINR(data.total_liabilities)} />
         <KpiCard
           title="Health Spend"
-          value={formatINR(data.health_spend ?? data.health_spend_total)}
+          value={formatINR(data.health_spend ?? data.health_spend_total ?? data.healthcare_spend)}
         />
         <KpiCard
           title="Insurance Coverage"
-          value={formatINR(data.insurance_coverage ?? data.total_coverage)}
+          value={formatINR(data.insurance_coverage ?? data.total_coverage ?? data.total_sum_insured)}
         />
       </div>
 
@@ -100,7 +119,7 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="card">
-          <h2 className="font-semibold mb-2">Monthly Trend</h2>
+          <h2 className="font-semibold mb-2">Health Spend by Category</h2>
           {barData.length ? (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={barData}>
@@ -112,7 +131,7 @@ export default function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-slate-500">No trend data.</p>
+            <p className="text-sm text-slate-500">No expense data yet.</p>
           )}
         </div>
       </div>

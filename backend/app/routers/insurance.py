@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.family import resolve_family_id
 from app.core.security import get_current_user
 from app.models.models import InsurancePolicy, User
 from app.schemas import schemas
@@ -27,7 +28,9 @@ def create_policy(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    policy = InsurancePolicy(**payload.model_dump())
+    data = payload.model_dump()
+    data["family_id"] = resolve_family_id(db, current_user, payload.family_id)
+    policy = InsurancePolicy(**data)
     db.add(policy)
     db.commit()
     db.refresh(policy)

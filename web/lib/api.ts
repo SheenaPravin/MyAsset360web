@@ -34,4 +34,20 @@ export async function apiDelete<T>(path: string): Promise<T> {
   return res.data;
 }
 
+/** Extract a human-readable message from an axios/API error. */
+export function apiErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    const detail = (err.response?.data as { detail?: unknown } | undefined)?.detail;
+    if (typeof detail === "string" && detail) return detail;
+    if (Array.isArray(detail)) {
+      const msgs = detail
+        .map((d) => (typeof d?.msg === "string" ? d.msg : null))
+        .filter(Boolean);
+      if (msgs.length) return msgs.join("; ");
+    }
+    if (err.response?.status === 0 || !err.response) return "Cannot reach the server.";
+  }
+  return fallback;
+}
+
 export default api;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiErrorMessage } from "@/lib/api";
 import { formatINR, getToken } from "@/lib/format";
 import DataTable from "@/components/DataTable";
 
@@ -57,8 +57,8 @@ export default function AssetsPage() {
       await apiPost("/api/assets/", form);
       setForm({ title: "", asset_type: "mutual_fund", current_value: 0, purchase_value: 0 });
       await load();
-    } catch {
-      setError("Failed to create asset.");
+    } catch (e) {
+      setError(apiErrorMessage(e, "Failed to create asset."));
     } finally {
       setSaving(false);
     }

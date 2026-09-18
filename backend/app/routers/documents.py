@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.family import resolve_family_id
 from app.core.security import get_current_user
 from app.models.models import Document, User
 from app.schemas import schemas
@@ -35,7 +36,9 @@ def create_document_metadata(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    doc = Document(**payload.model_dump(), uploaded_by=current_user.id)
+    data = payload.model_dump()
+    data["family_id"] = resolve_family_id(db, current_user, payload.family_id)
+    doc = Document(**data, uploaded_by=current_user.id)
     db.add(doc)
     db.commit()
     db.refresh(doc)
@@ -44,9 +47,9 @@ def create_document_metadata(
 
 @router.post("/upload", response_model=schemas.DocumentOut)
 def upload_document(
-    family_id: int = Form(...),
-    title: str = Form(...),
+    title: str = Form(default=""),
     category: str = Form(default="general"),
+    family_id: int | None = Form(default=None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -57,8 +60,8 @@ def upload_document(
     contents = file.file.read()
     dest.write_bytes(contents)
     doc = Document(
-        family_id=family_id,
-        title=title,
+        family_id=resolve_family_id(db, current_user, family_id),
+        title=title or file.filename or filename,
         category=category,
         file_path=str(dest),
         file_type=file.content_type or "",

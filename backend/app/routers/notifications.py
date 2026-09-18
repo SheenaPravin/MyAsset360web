@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.family import resolve_family_id
 from app.core.security import get_current_user
 from app.models.models import Notification, User
 from app.schemas import schemas
@@ -45,7 +46,9 @@ def create_notification(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    notif = Notification(**payload.model_dump())
+    data = payload.model_dump()
+    data["family_id"] = resolve_family_id(db, current_user, payload.family_id)
+    notif = Notification(**data)
     db.add(notif)
     db.commit()
     db.refresh(notif)

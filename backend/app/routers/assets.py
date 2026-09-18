@@ -3,6 +3,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.family import resolve_family_id
 from app.core.security import get_current_user
 from app.models.models import Asset, Liability, User
 from app.schemas import schemas
@@ -52,7 +53,9 @@ def create_asset(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    asset = Asset(**payload.model_dump())
+    data = payload.model_dump()
+    data["family_id"] = resolve_family_id(db, current_user, payload.family_id)
+    asset = Asset(**data)
     db.add(asset)
     db.commit()
     db.refresh(asset)

@@ -3,15 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiErrorMessage } from "@/lib/api";
 import { getToken } from "@/lib/format";
 import DataTable from "@/components/DataTable";
 
 type Doc = {
   id?: number;
   title?: string;
-  filename?: string;
-  file_name?: string;
+  category?: string;
+  file_type?: string;
+  size?: number;
   created_at?: string;
 };
 
@@ -28,9 +29,9 @@ export default function VaultPage() {
     setLoading(true);
     setError(null);
     try {
-      setRows(await apiGet<Doc[]>("/api/vault/documents"));
-    } catch {
-      setError("Failed to load documents.");
+      setRows(await apiGet<Doc[]>("/api/documents/"));
+    } catch (e) {
+      setError(apiErrorMessage(e, "Failed to load documents."));
     } finally {
       setLoading(false);
     }
@@ -56,14 +57,14 @@ export default function VaultPage() {
       const fd = new FormData();
       fd.append("file", file);
       fd.append("title", title || file.name);
-      await api.post("/api/vault/upload", fd, {
+      await api.post("/api/documents/upload", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setTitle("");
       setFile(null);
       await load();
-    } catch {
-      setError("Upload failed.");
+    } catch (e) {
+      setError(apiErrorMessage(e, "Upload failed."));
     } finally {
       setUploading(false);
     }
@@ -102,7 +103,10 @@ export default function VaultPage() {
         <h2 className="font-semibold mb-2">Documents</h2>
         <DataTable<Doc>
           columns={[
-            { key: "title", header: "Title", render: (r) => r.title ?? r.filename ?? r.file_name ?? "—" },
+            { key: "title", header: "Title", render: (r) => r.title ?? "—" },
+            { key: "category", header: "Category", render: (r) => r.category ?? "—" },
+            { key: "file_type", header: "Type", render: (r) => r.file_type || "—" },
+            { key: "size", header: "Size", render: (r) => r.size ? `${Math.round(r.size / 1024)} KB` : "—" },
             { key: "created_at", header: "Uploaded", render: (r) => r.created_at ?? "—" },
           ]}
           rows={rows}
