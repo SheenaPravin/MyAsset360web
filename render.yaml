@@ -1,0 +1,43 @@
+# Render Blueprint — MyAsset360 (free-tier POC hosting)
+# One-click deploy: https://dashboard.render.com/select-repo?type=blueprint
+# Connect repo SheenaPravin/MyAsset360web and Render will create all 3 resources below.
+
+databases:
+  - name: myasset360-db
+    databaseName: myasset360
+    user: myasset360
+    plan: free # NOTE: Render free Postgres expires after 30 days; upgrade for production
+
+services:
+  - type: web
+    name: myasset360-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: myasset360-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 10080
+
+  - type: web
+    name: myasset360-web
+    runtime: node
+    rootDir: web
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    plan: free
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        # Default Render URL for the API service above. If Render assigns a
+        # different hostname (name clash), update this variable in the dashboard
+        # to your actual API URL (https://<api-service>.onrender.com) and redeploy.
+        value: https://myasset360-api.onrender.com
