@@ -8,7 +8,7 @@ const modules = [
   { title: "Vault", href: "/vault", desc: "Encrypted document locker for deeds, policies, reports." },
   { title: "AI Insights", href: "/insights", desc: "Net-worth trends, spend anomalies, renewal nudges." },
   { title: "Dashboard", href: "/dashboard", desc: "Net worth, liabilities and coverage at a glance." },
-  { title: "Secure Login", href: "/login", desc: "JWT-secured access backed by your FastAPI backend." },
+  { title: "Secure Login", href: "/login", desc: "Private, secure access for your family." },
 ];
 
 export default function Home() {
@@ -20,7 +20,7 @@ export default function Home() {
         </h1>
         <p className="mt-4 text-slate-600 max-w-2xl mx-auto">
           MyAsset360 unifies assets, loans, insurance, health and documents
-          into a single family dashboard powered by FastAPI + Next.js.
+          into a single secure family dashboard.
         </p>
         <div className="mt-6 flex gap-3 justify-center">
           <Link href="/dashboard" className="btn-primary">
@@ -39,19 +39,6 @@ export default function Home() {
             <p className="text-sm text-slate-600 mt-1">{m.desc}</p>
           </Link>
         ))}
-      </section>
-
-      <section className="card mt-8">
-        <h2 className="font-semibold text-lg">Architecture</h2>
-        <p className="text-sm text-slate-600 mt-2">
-          Next.js 14 (App Router) frontend talks to FastAPI at{" "}
-          <code>NEXT_PUBLIC_API_URL</code> (default{" "}
-          <code>http://localhost:8000</code>). JWT from{" "}
-          <code>POST /api/auth/login</code> is stored in{" "}
-          <code>localStorage</code> and attached as a Bearer token on every
-          request. Dashboards read from <code>/api/analytics/*</code>;
-          CRUD pages use per-module routers.
-        </p>
       </section>
     </div>
   );

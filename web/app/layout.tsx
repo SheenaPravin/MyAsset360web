@@ -19,8 +19,8 @@ export default function RootLayout({
         <main className="container py-6">{children}</main>
         <footer className="border-t mt-8">
           <div className="container py-4 text-sm text-slate-500">
-            MyAsset360 MVP — Next.js + FastAPI. API:{" "}
-            {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}
+            MyAsset360 — Manage your family&apos;s wealth. Protect your
+            family&apos;s health.
           </div>
         </footer>
       </body>
