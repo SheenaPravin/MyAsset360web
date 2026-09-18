@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.db
+*.sqlite*
+uploads/*.*
+!uploads/.gitkeep
+node_modules/
+.next/
+out/
+dist/
